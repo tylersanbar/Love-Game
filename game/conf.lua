@@ -1,4 +1,5 @@
 -- https://love2d.org/wiki/Config_Files
+
 function love.conf(t)
 	t.identity              = nil
 	t.appendidentity        = false
@@ -11,8 +12,8 @@ function love.conf(t)
 	t.audio.mic             = false
 	t.audio.mixwithsystem   = true
 
-	t.window.title          = "Untitled"
-	t.window.icon           = nil
+	t.window.title          = "Foetons"
+	t.window.icon           = "icon.png"
 	t.window.width          = 800
 	t.window.height         = 600
 	t.window.borderless     = false

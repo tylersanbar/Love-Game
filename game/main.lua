@@ -7,12 +7,32 @@ if IS_DEBUG then
 	end
 end
 
+Object = require "lib/classic"
+Inspect = require "lib/inspect"
+require "lib/arrow"
+require "src/Game"
+require "src/Globals"
+require "src/GameObjects/Ship"
+require "src/GameObjects/Node"
+require "src/GameObjects/Harbor"
+require "src/GameObjects/Arrow"
+
 function love.load()
+	G:startDemo()
 end
 
-function love.update()
-	print("Hello!")
+function love.update(dt)
+	G:update(dt)
 end
 
 function love.draw()
+	G:draw()
+end
+
+function love.mousepressed(x, y, button, istouch, presses)
+	G:mousepressed(x, y, button, istouch, presses)
+end
+
+function love.mousereleased(x, y, button, istouch, presses)
+	G:mousereleased(x, y, button, istouch, presses)
 end
