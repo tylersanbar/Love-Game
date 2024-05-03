@@ -14,6 +14,7 @@ require "src/Game"
 require "src/Globals"
 require "src/GameObjects/Ship"
 require "src/GameObjects/Node"
+require "src/GameObjects/HarborCollection"
 require "src/GameObjects/Harbor"
 require "src/GameObjects/Arrow"
 
@@ -27,6 +28,10 @@ end
 
 function love.draw()
 	G:draw()
+end
+
+function love.keypressed(key)
+	G:keypressed(key)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)

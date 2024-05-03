@@ -3,103 +3,101 @@
 -- Pass Object as first argument.
 Ship = Object.extend(Object)
 
-local shipRadius = 3;
+local shipRadius = 2;
 
-function Ship.new(self, x, y, angle, parent)
+function Ship.new(self, x, y, harbor, team)
     self.body = love.physics.newBody(G.world, x, y, "dynamic")
     self.body:setMass(1)
     self.shape = love.physics.newCircleShape(shipRadius)
     self.fixture = love.physics.newFixture(self.body, self.shape)
-    self.body:setAngle(angle)
-    --self.body:setLinearVelocity(math.random(-1, 1), math.random(-1, 1))
+    self.fixture:setRestitution(1)
+    self.fixture:setFriction(0)
+    self.fixture:setCategory(G.CATEGORIES.ship, team)
+    self.fixture:setMask(G.CATEGORIES.node, team)
     self.color = G.C.blue
-    self.parent = parent
-    self.targetX = x
-    self.targetY = y
-    self.maxAcceleration = 100
+    self.harbor = harbor
+    self.task = 'seekHarbor'
+    self.targetX, self.targetY = self:getClosestHarborPoint()
+    self.velocity = 100
+end
+
+function Ship.log(self)
+    print("x:" ..self.body:getX() .. " Y:" .. self.body:getY())
+    print("targetX: " ..self.targetX .. " targetY:" .. self.targetY)
+    local vx, vy = self.body:getLinearVelocity()
+    print("velocityX: " .. vx .. " velocityY: " .. vy)
 end
 
 function Ship.update(self, dt)
-    self:triggerMove(dt)
-end
-
-function Ship.triggerMove(self, dt)
-    local tx, ty = self:getClosestHarborPoint()
-    self.targetX = tx
-    self.targetY = ty
-    local distanceX = math.abs(self.targetX - self.body:getX())
-    local distanceY = math.abs(self.targetY - self.body:getY())
-    print("DistanceX: " .. distanceX)
-    print("DistanceY: " .. distanceY)
-    if(distanceX < .5 and distanceY < .5) then
-        self:snapToTarget()
-        self:applyClockwiseTangentForce(dt)
-    else
+    if(G.log) then
+        self:log()
+    end
+    if(self.task == nil) then
+        return
+    elseif(self.task == "seekHarbor") then
+        self:seekHarbor(dt)
+    elseif(self.task == "orbit") then
+        self:orbit(dt)
+    elseif(self.task == "seekTarget") then
         self:seekTarget(dt)
     end
 end
 
+function Ship.setXYVelocity(self, angle)
+    return self.body:setLinearVelocity(math.cos(angle) * self.velocity, math.sin(angle) * self.velocity)
+end
+
+function Ship.seekHarbor(self, dt)
+    self:targetClosestHarbor()
+    local distance = M.distance(self.body:getX(), self.body:getY(), self.targetX , self.targetY)
+    if(distance < .5) then
+        self.snapToTarget(self)
+        self.task = "orbit"
+        return
+    end
+    self:seekTarget(dt)
+end
+
 function Ship.snapToTarget(self)
+    self.body:setLinearVelocity(0, 0)
     self.body:setX(self.targetX)
     self.body:setY(self.targetY)
 end
 
-function Ship.applyClockwiseTangentForce(self, dt)
-    local angle = math.atan2(self.body:getY() - self.parent.y, self.body:getX() - self.parent.x)
-    local forceX = math.cos(angle + math.pi/2) * 50
-    local forceY = math.sin(angle + math.pi/2) * 50
-    self.body:applyForce(forceX, forceY)
+function Ship.orbit(self, dt)
+    self:targetClosestHarbor()
+    local distanceT = M.distance(self.body:getX(), self.body:getY(), self.targetX , self.targetY)
+    if(distanceT > 1) then
+        self.task = "seekHarbor"
+        return
+    end
+    local distanceC = M.distance(self.body:getX(), self.body:getY(), self.harbor.x, self.harbor.y)
+
+    local angle = M.getClockwiseTangentAngle(self.body:getX(), self.body:getY(), self.harbor.x, self.harbor.y)
+    if(distanceC - self.harbor.radius > .5) then
+        angle = angle - .01
+    end
+    if(distanceC - self.harbor.radius < .5) then
+        angle = angle + .01
+    end
+    self.setXYVelocity(self, angle)
+end
+
+function Ship.targetClosestHarbor(self)
+    self.targetX, self.targetY = self:getClosestHarborPoint()
 end
 
 function Ship.getClosestHarborPoint(self)
-    local parentX = self.parent.x
-    local parentY = self.parent.y
-    local dx = self.body:getX() - parentX
-    local dy = self.body:getY() - parentY
-    if(dx == 0 and dy == 0) then
-        local x = parentX + self.parent.radius * math.cos(math.random(0, 2 * math.pi))
-        local y = parentY + self.parent.radius * math.sin(math.random(0, 2 * math.pi))
-        return x, y
-    end
-    local distance = math.sqrt(dx * dx + dy * dy)
-    local x = parentX + self.parent.radius * dx / distance
-    local y = parentY + self.parent.radius * dy / distance
-    return x, y
+    return M.closestPointOnCircle(self.body:getX(), self.body:getY(), self.harbor.x, self.harbor.y, self.harbor.radius)
 end
 
-function Ship.seekTarget(self, dt, targetX, targetY)
-    -- Get the current velocity
-    local velocityX, velocityY = self.body:getLinearVelocity()
-    -- Calculate the desired velocity
-    local dx = self.targetX - self.body:getX()
-    local dy = self.targetY - self.body:getY()
-    local distance = math.sqrt(dx * dx + dy * dy)
-    local desired_velocity_x = dx / distance * self.maxAcceleration
-    local desired_velocity_y = dy / distance * self.maxAcceleration
-    -- Apply force based on the difference between the desired velocity and the current velocity
-    local forceX = (desired_velocity_x - velocityX) * self.body:getMass() / dt
-    local forceY = (desired_velocity_y - velocityY) * self.body:getMass() / dt
-    self.body:applyForce(forceX, forceY)
-end
-
-function Ship.findClosestShip(self)
-    local closestShip = nil
-    local closestDistance = 1000000
-    for i, node in pairs(G.nodes) do
-        for j, ship in pairs(node.harbor.ships) do
-            local distance = math.sqrt((self.x - ship.x)^2 + (self.y - ship.y)^2)
-            if distance < closestDistance then
-                closestDistance = distance
-                closestShip = ship
-            end
-        end
-    end
-    return closestShip
+function Ship.seekTarget(self, dt)
+    local angle = M.angleBetween(self.body:getX(), self.body:getY(), self.targetX, self.targetY)
+    self.setXYVelocity(self, angle)
 end
 
 function Ship.draw(self)
-    self:drawTargetLine()
-
+    --self:drawTargetLine()
     love.graphics.setColor(self.color)
     love.graphics.circle("fill", self.body:getX(), self.body:getY(), shipRadius)
 
@@ -108,4 +106,10 @@ end
 function Ship.drawTargetLine(self)
     love.graphics.setColor(G.C.red)
     love.graphics.line(self.body:getX(), self.body:getY(), self.targetX, self.targetY)
+end
+
+function Ship.setTarget(self, target)
+    self.targetX = target.body:getX()
+    self.targetY = target.body:getY()
+    self.task = "seekTarget"
 end
