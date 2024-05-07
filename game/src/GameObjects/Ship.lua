@@ -2,10 +2,12 @@
 
 -- Pass Object as first argument.
 Ship = Object.extend(Object)
-
+CURRENT_SHIP_ID = 0
 local shipRadius = 2;
 
 function Ship.new(self, x, y, harbor, team)
+    self.id = CURRENT_SHIP_ID
+    CURRENT_SHIP_ID = CURRENT_SHIP_ID + 1
     self.body = love.physics.newBody(G.world, x, y, "dynamic")
     self.body:setMass(1)
     self.shape = love.physics.newCircleShape(shipRadius)
@@ -39,15 +41,8 @@ function Ship.handleNodeCollision(self, node)
         if(self.harbor.collection.node == node) then
             return
         end
-        local harbor = node.harbors:getFirstFreeHarbor()
-        if(harbor == nil) then
-            node.harbors:addHarbor(node.body:getX(), node.body:getY(), node.radius, 5)
-            harbor = node.harbors:getFirstFreeHarbor()
-        end
-        self.harbor = harbor
-        self.harbor.shipCount = self.harbor.shipCount + 1
-        self.harbor.collection.node.shipCount = self.harbor.collection.node.shipCount + 1
-        self:seekHarbor()
+        self.removeFromNode(self)
+        self.addToNode(self, node)
         return
     end
     self:handleEnemyNodeCollision(node)
@@ -55,10 +50,9 @@ end
 
 function Ship.handleEnemyNodeCollision(self, node)
     if(node.shipCount == 0) then
-        self.harbor.shipCount = self.harbor.shipCount - 1
-        self.harbor.collection.node.shipCount = self.harbor.collection.node.shipCount - 1
+        self.removeFromNode(self)
         node.team = self.team
-        self:handleNodeCollision(node)
+        self.addToNode(self, node)
         return
     end
     local ship = node.ships[#node.ships]
@@ -89,6 +83,11 @@ function Ship.log(self)
 end
 
 function Ship.handleRemoval(self)
+    self:removeFromNode()
+    self.body:destroy()
+end
+
+function Ship.removeFromNode(self)
     self.harbor.shipCount = self.harbor.shipCount - 1
     self.harbor.collection.node.shipCount = self.harbor.collection.node.shipCount - 1
 
@@ -102,7 +101,20 @@ function Ship.handleRemoval(self)
 
     -- Replace the old ships table with the new one
     self.harbor.collection.node.ships = newShips
-    self.body:destroy()
+end
+
+function Ship.addToNode(self, node)
+    local harbor = node.harbors:getFirstFreeHarbor()
+    if(harbor == nil) then
+        node.harbors:addHarbor(node.body:getX(), node.body:getY(), node.radius, 5)
+        harbor = node.harbors:getFirstFreeHarbor()
+    end
+    self.harbor = harbor
+    self.harbor.shipCount = self.harbor.shipCount + 1
+    self.harbor.collection.node.shipCount = self.harbor.collection.node.shipCount + 1
+    node.ships[#node.ships + 1] = self
+    self.task = "seekHarbor"
+    self:seekHarbor()
 end
 
 function Ship.update(self, dt)

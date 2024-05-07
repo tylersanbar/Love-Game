@@ -2,10 +2,12 @@
 
 -- Pass Object as first argument.
 HarborCollection = Object.extend(Object)
-
+CURRENT_HARBOR_COLLECTION_ID = 0
 local nodeRadiusRatio = 1.2
 
 function HarborCollection.new(self, node)
+    self.id = CURRENT_HARBOR_COLLECTION_ID
+    CURRENT_HARBOR_COLLECTION_ID = CURRENT_HARBOR_COLLECTION_ID + 1
     self.node = node
     self.harbors = {}
     self.harborCount = 0

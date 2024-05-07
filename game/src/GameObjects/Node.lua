@@ -2,8 +2,11 @@
 
 -- Pass Object as first argument.
 Node = Object.extend(Object)
+CURRENT_NODE_ID = 0
 
 function Node.new(self, x, y, radius, initialShipCount, team)
+    self.id = CURRENT_NODE_ID
+    CURRENT_NODE_ID = CURRENT_NODE_ID + 1
     self.team = team
     self.body = love.physics.newBody(G.world, x, y, "static")
     self.shape = love.physics.newCircleShape(radius)

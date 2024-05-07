@@ -2,10 +2,13 @@
 
 -- Pass Object as first argument.
 Harbor = Object.extend(Object)
+CURRENT_HARBOR_ID = 0
 
 require "src/GameObjects/Ship"
 
 function Harbor.new(self, x, y, radius, capacity, collection)
+    self.id = CURRENT_HARBOR_ID
+    CURRENT_HARBOR_ID = CURRENT_HARBOR_ID + 1
     self.x = x
     self.y = y
     self.radius = radius
