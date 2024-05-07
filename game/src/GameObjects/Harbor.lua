@@ -5,12 +5,13 @@ Harbor = Object.extend(Object)
 
 require "src/GameObjects/Ship"
 
-function Harbor.new(self, x, y, radius, capacity)
+function Harbor.new(self, x, y, radius, capacity, collection)
     self.x = x
     self.y = y
     self.radius = radius
     self.shipCount = 0
     self.shipCapacity = capacity
+    self.collection = collection
     print("Harbor created with capacity: " .. self.shipCapacity)
 end
 

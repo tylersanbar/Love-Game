@@ -12,7 +12,26 @@ function Game:new()
     self.log = false
     love.physics.setMeter(64)
     self.world = love.physics.newWorld(0, 0, true)
+    self.world:setCallbacks(beginContact, endContact)
     self.shouldUpdate = true
+end
+
+function beginContact(a, b, coll)
+    local dataA = a:getUserData()
+    local dataB = b:getUserData()
+    if(dataA == nil or dataB == nil) then
+        return
+    end
+    if(type(dataA.handleCollision) == "function") then
+        dataA:handleCollision(dataB)
+    end
+    if(type(dataB.handleCollision) == "function") then
+        dataB:handleCollision(dataA)
+    end
+
+end
+
+function endContact(a, b, coll)
 end
 
 function Game.update(self, dt)
@@ -38,7 +57,7 @@ function Game.findNode(self, x, y)
 end
 
 function Game.startDemo(self)
-    self:spawnNode(300, 300, 25, 1, G.CATEGORIES.team1)
+    self:spawnNode(300, 300, 25, 10, G.CATEGORIES.team1)
     self:spawnNode(400, 300, 25, 1, G.CATEGORIES.team2)
     return self
 end

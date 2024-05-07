@@ -5,7 +5,8 @@ HarborCollection = Object.extend(Object)
 
 local nodeRadiusRatio = 1.2
 
-function HarborCollection.new(self)
+function HarborCollection.new(self, node)
+    self.node = node
     self.harbors = {}
     self.harborCount = 0
 end
@@ -14,7 +15,7 @@ function HarborCollection.addHarbor(self, x, y, radius)
     print("Adding harbor at: " .. x .. ", " .. y)
     self.harborCount = self.harborCount + 1
     local harborRadius = radius * (self.harborCount * (nodeRadiusRatio - 1) + 1) * 1.2
-    local harbor = Harbor(x, y, harborRadius, 2 * (self.harborCount ^ 2))
+    local harbor = Harbor(x, y, harborRadius, 2 * (self.harborCount ^ 2), self)
     table.insert(self.harbors, harbor)
 end
 

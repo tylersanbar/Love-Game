@@ -10,15 +10,75 @@ function Ship.new(self, x, y, harbor, team)
     self.body:setMass(1)
     self.shape = love.physics.newCircleShape(shipRadius)
     self.fixture = love.physics.newFixture(self.body, self.shape)
+    self.fixture:setUserData(self)
     self.fixture:setRestitution(1)
     self.fixture:setFriction(0)
-    self.fixture:setCategory(G.CATEGORIES.ship, team)
-    self.fixture:setMask(G.CATEGORIES.node, team)
+    self.type = "ship"
+    self.team = team
     self.color = G.C.blue
     self.harbor = harbor
     self.task = 'seekHarbor'
     self.targetX, self.targetY = self:getClosestHarborPoint()
     self.velocity = 100
+    self.destroyed = false
+end
+
+function Ship.handleCollision(self, other)
+    if(other == nil) then
+        return
+    end
+    if(other.type == 'node') then
+        self:handleNodeCollision(other)
+    elseif(other.type == 'ship') then
+        self:handleShipCollision(other)
+    end
+end
+
+function Ship.handleNodeCollision(self, node)
+    if(node.team == self.team) then
+        if(self.harbor.collection.node == node) then
+            return
+        end
+        local harbor = node.harbors:getFirstFreeHarbor()
+        if(harbor == nil) then
+            node.harbors:addHarbor(node.body:getX(), node.body:getY(), node.radius, 5)
+            harbor = node.harbors:getFirstFreeHarbor()
+        end
+        self.harbor = harbor
+        self.harbor.shipCount = self.harbor.shipCount + 1
+        self.harbor.collection.node.shipCount = self.harbor.collection.node.shipCount + 1
+        self:seekHarbor()
+        return
+    end
+    self:handleEnemyNodeCollision(node)
+end
+
+function Ship.handleEnemyNodeCollision(self, node)
+    if(node.shipCount == 0) then
+        self.harbor.shipCount = self.harbor.shipCount - 1
+        self.harbor.collection.node.shipCount = self.harbor.collection.node.shipCount - 1
+        node.team = self.team
+        self:handleNodeCollision(node)
+        return
+    end
+    local ship = node.ships[#node.ships]
+    ship:destroy()
+    self:destroy()
+end
+
+function Ship.handleShipCollision(self, ship)
+    if(ship.team == self.team) then
+        return
+    end
+    self:handleEnemyShipCollision()
+end
+
+function Ship.handleEnemyShipCollision(self)
+    self:destroy()
+end
+
+function Ship.destroy(self)
+    self.destroyed = true
 end
 
 function Ship.log(self)
@@ -28,9 +88,30 @@ function Ship.log(self)
     print("velocityX: " .. vx .. " velocityY: " .. vy)
 end
 
+function Ship.handleRemoval(self)
+    self.harbor.shipCount = self.harbor.shipCount - 1
+    self.harbor.collection.node.shipCount = self.harbor.collection.node.shipCount - 1
+
+    -- Create a new table and add only the ships that should not be removed
+    local newShips = {}
+    for i, ship in ipairs(self.harbor.collection.node.ships) do
+        if ship ~= self then
+            table.insert(newShips, ship)
+        end
+    end
+
+    -- Replace the old ships table with the new one
+    self.harbor.collection.node.ships = newShips
+    self.body:destroy()
+end
+
 function Ship.update(self, dt)
     if(G.log) then
         self:log()
+    end
+    if(self.destroyed) then
+        self:handleRemoval()
+        return
     end
     if(self.task == nil) then
         return

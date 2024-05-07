@@ -8,9 +8,11 @@ function Node.new(self, x, y, radius, initialShipCount, team)
     self.body = love.physics.newBody(G.world, x, y, "static")
     self.shape = love.physics.newCircleShape(radius)
     self.fixture = love.physics.newFixture(self.body, self.shape)
-    self.fixture:setCategory(team)
+    self.fixture:setUserData(self)
+    self.team = team
+    self.type = "node"
     self.radius = radius
-    self.harbors = HarborCollection()
+    self.harbors = HarborCollection(self)
     self.harbors:addHarbor(x, y, self.radius)
     self.maxShips = 100
     self.color = G.C.white
@@ -21,7 +23,7 @@ function Node.new(self, x, y, radius, initialShipCount, team)
     end
     self.lastSpawnTime = 0.0
     self.spawnSpeed = 1
-    self.shouldSpawn = true
+    self.shouldSpawn = false
     print("Node created at: " .. self.body:getX() .. ", " .. self.body:getY())
     print("Node has " .. self.shipCount .. " ships")
 end
