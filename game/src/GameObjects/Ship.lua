@@ -17,7 +17,7 @@ function Ship.new(self, x, y, harbor, team)
     self.fixture:setFriction(0)
     self.type = "ship"
     self.team = team
-    self.color = G.C.blue
+    self.color = COLORS.blue
     self.harbor = harbor
     self.task = 'seekHarbor'
     self.targetX, self.targetY = self:getClosestHarborPoint()
@@ -62,9 +62,26 @@ end
 
 function Ship.handleShipCollision(self, ship)
     if(ship.team == self.team) then
+        self.moveToAntiPodalPosition(ship)
         return
     end
     self:handleEnemyShipCollision()
+end
+
+function Ship.moveToAntiPodalPosition(self)
+    local harbor = self.harbor
+    local angle = M.angleBetween(self.body:getX(), self.body:getY(), harbor.x, harbor.y)
+    self.targetX = harbor.x + math.cos(angle) * harbor.radius
+    self.targetY = harbor.y + math.sin(angle) * harbor.radius
+    self.task = "teleport"
+end
+
+function Ship.moveToRandomPosition(self)
+    local harbor = self.harbor
+    local angle = math.random(0, math.pi * 2)
+    self.targetX = harbor.x + math.cos(angle) * harbor.radius
+    self.targetY = harbor.y + math.sin(angle) * harbor.radius
+    self.task = "teleport"
 end
 
 function Ship.handleEnemyShipCollision(self)
@@ -112,7 +129,7 @@ function Ship.addToNode(self, node)
     self.harbor = harbor
     self.harbor.shipCount = self.harbor.shipCount + 1
     self.harbor.collection.node.shipCount = self.harbor.collection.node.shipCount + 1
-    node.ships[#node.ships + 1] = self
+    table.insert(node.ships, self)
     self.task = "seekHarbor"
     self:seekHarbor()
 end
@@ -133,7 +150,14 @@ function Ship.update(self, dt)
         self:orbit(dt)
     elseif(self.task == "seekTarget") then
         self:seekTarget(dt)
+    elseif(self.task == "teleport") then
+        self:teleport(dt)
     end
+end
+
+function Ship.teleport(self, dt)
+    self.snapToTarget(self)
+    self.task = "seekHarbor"
 end
 
 function Ship.setXYVelocity(self, angle)
@@ -197,7 +221,7 @@ function Ship.draw(self)
 end
 
 function Ship.drawTargetLine(self)
-    love.graphics.setColor(G.C.red)
+    love.graphics.setColor(COLORS.red)
     love.graphics.line(self.body:getX(), self.body:getY(), self.targetX, self.targetY)
 end
 

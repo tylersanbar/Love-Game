@@ -17,28 +17,35 @@ function Node.new(self, x, y, radius, initialShipCount, team)
     self.radius = radius
     self.harbors = HarborCollection(self)
     self.harbors:addHarbor(x, y, self.radius)
-    self.maxShips = 100
-    self.color = G.C.white
+    self.maxShips = 500
+    self.color = COLORS.white
     self.ships = {}
     self.shipCount = 0
+    self.pulse = 0
+    self.pulseFrequency = 1
+    self.pulseAmplitude = 1
     for i = 1, initialShipCount, 1 do
         self:spawnShip()
     end
     self.lastSpawnTime = 0.0
     self.spawnSpeed = 1
-    self.shouldSpawn = false
+    self.shouldSpawn = true
     print("Node created at: " .. self.body:getX() .. ", " .. self.body:getY())
     print("Node has " .. self.shipCount .. " ships")
 end
 
 function Node.draw(self)
     love.graphics.setColor(self.color)
-    love.graphics.circle("fill", self.body:getX(), self.body:getY(), self.radius)
+    love.graphics.circle("fill", self.body:getX(), self.body:getY(), self.radius + self:getPulseRadius())
     self:drawCount()
     if(self.arrow ~= nil) then
         self.arrow.draw(self.arrow)
     end
     self:drawShips()
+end
+
+function Node.getPulseRadius(self)
+    return math.sin(G.time * 2 * math.pi * self.pulseFrequency) * self.pulseAmplitude
 end
 
 function Node.drawShips(self)
@@ -48,7 +55,7 @@ function Node.drawShips(self)
 end
 
 function Node.drawCount(self)
-    love.graphics.setColor(G.C.black)
+    love.graphics.setColor(COLORS.black)
     local text = tostring(self.shipCount)
     local font = love.graphics.getFont()
     local text_w = font:getWidth(text)
@@ -63,6 +70,7 @@ function Node.update(self, dt)
     self.harbors:update(dt)
     self:updateShips(dt)
     self:checkForSpawnShips()
+    --self.pulse = self.pulse + dt * self.pulseSpeed * 2 * math.pi
 end
 
 function Node.updateShips(self, dt)
@@ -91,9 +99,11 @@ function Node.spawnShip(self)
         harbor = self.harbors:getFirstFreeHarbor()
     end
     local ship = Ship(self.body:getX(), self.body:getY(), harbor, self.team)
-    self.ships[self.shipCount] = ship
+    table.insert(self.ships, ship)
     harbor.shipCount = harbor.shipCount + 1
     self.shipCount = self.shipCount + 1
+    print(self.shipCount)
+    print(#self.ships)
 end
 
 function Node.isWithin(self, x, y)
@@ -108,7 +118,7 @@ end
 
 function Node.handleMousePressed(self)
     if(self:isWithin(love.mouse.getX(), love.mouse.getY())) then
-        self.color = G.C.blue
+        self.color = COLORS.blue
         if(self.arrow == nil) then
             self:spawnArrow(love.mouse.getX(), love.mouse.getY())
         end
@@ -124,10 +134,10 @@ function Node.handleMouseReleased(self)
             self.moveShips(self, target)
         end
         self.arrow = nil
-        self.color = G.C.white
+        self.color = COLORS.white
     else
         if(self:isWithin(x, y)) then
-            self.color = G.C.red
+            self.color = COLORS.red
         end
     end
 end

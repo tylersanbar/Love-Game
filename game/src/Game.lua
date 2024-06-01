@@ -5,15 +5,20 @@ Game = Object.extend(Object)
 
 function Game:new()
     G = self
-    self:set_globals()
+    self.log = false
+    self:startNewGame()
+    self:startDemo()
+end
+
+function Game.startNewGame(self)
     self.ships = {}
     self.nodes = {}
     self.time = 0
-    self.log = false
     love.physics.setMeter(64)
     self.world = love.physics.newWorld(0, 0, true)
     self.world:setCallbacks(beginContact, endContact)
     self.shouldUpdate = true
+
 end
 
 function beginContact(a, b, coll)
@@ -57,8 +62,8 @@ function Game.findNode(self, x, y)
 end
 
 function Game.startDemo(self)
-    self:spawnNode(300, 300, 25, 10, G.CATEGORIES.team1)
-    self:spawnNode(400, 300, 25, 1, G.CATEGORIES.team2)
+    self:spawnNode(300, 300, 25, 10, CATEGORIES.team1)
+    self:spawnNode(400, 300, 25, 1, CATEGORIES.team2)
     return self
 end
 

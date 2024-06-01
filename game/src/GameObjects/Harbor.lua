@@ -22,7 +22,7 @@ function Harbor.update(self, dt)
 end
 
 function Harbor.draw(self)
-    love.graphics.setColor(G.C.purple)
+    love.graphics.setColor(COLORS.purple)
     love.graphics.setLineWidth(1)
     --love.graphics.circle("line", self.x, self.y, self.radius)
 end
