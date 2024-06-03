@@ -1,0 +1,50 @@
+{
+    "defaults": {
+        "node" :{
+            "maxSize": 100,
+            "startingShips": 0
+        }
+    },
+    "maps": [
+        {
+            "id": "1",
+            "isDefault": true,
+            "name": "Map 1",
+            "description": "This is the first map",
+            "nodes": [
+                {
+                    "id": 1,
+                    "x": 100,
+                    "y": 100,
+                    "team": 1
+                },
+                {
+                    "id": 2,
+                    "x": 200,
+                    "y": 200,
+                    "team": 2
+                }
+            ]
+        },
+        {
+            "id": "2",
+            "isDefault": false,
+            "name": "Map 2",
+            "description": "This is the second map",
+            "nodes": [
+                {
+                    "id": 1,
+                    "x": 300,
+                    "y": 100,
+                    "team": 1
+                },
+                {
+                    "id": 2,
+                    "x": 200,
+                    "y": 200,
+                    "team": 2
+                }
+            ]
+        }
+    ]
+}
